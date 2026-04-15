@@ -1,0 +1,95 @@
+{
+  "name": "FMCG Incremental Update",
+  "email_notifications": {
+    "no_alert_for_skipped_runs": false
+  },
+  "webhook_notifications": {},
+  "timeout_seconds": 0,
+  "schedule": {
+    "quartz_cron_expression": "45 0 23 * * ?",
+    "timezone_id": "Asia/Calcutta",
+    "pause_status": "PAUSED"
+  },
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "dim_processing_customers",
+      "run_if": "ALL_SUCCESS",
+      "notebook_task": {
+        "notebook_path": "/Workspace/consolidated_pipeline/2_dimension_data_processing/1_customer_data_processing",
+        "base_parameters": {
+          "catalog": "fmcg",
+          "data_source": "customers"
+        },
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 0,
+      "email_notifications": {},
+      "webhook_notifications": {}
+    },
+    {
+      "task_key": "dim_processing_products",
+      "depends_on": [
+        {
+          "task_key": "dim_processing_customers"
+        }
+      ],
+      "run_if": "ALL_SUCCESS",
+      "notebook_task": {
+        "notebook_path": "/Workspace/consolidated_pipeline/2_dimension_data_processing/2_products_data_processing",
+        "base_parameters": {
+          "catalog": "fmcg",
+          "data_source": "products"
+        },
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 0,
+      "email_notifications": {},
+      "webhook_notifications": {}
+    },
+    {
+      "task_key": "dim_processing_prices",
+      "depends_on": [
+        {
+          "task_key": "dim_processing_products"
+        }
+      ],
+      "run_if": "ALL_SUCCESS",
+      "notebook_task": {
+        "notebook_path": "/Workspace/consolidated_pipeline/2_dimension_data_processing/3_pricing_data_processing",
+        "base_parameters": {
+          "catalog": "fmcg",
+          "data_source": "gross_price"
+        },
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 0,
+      "email_notifications": {},
+      "webhook_notifications": {}
+    },
+    {
+      "task_key": "fact_processing_orders",
+      "depends_on": [
+        {
+          "task_key": "dim_processing_prices"
+        }
+      ],
+      "run_if": "ALL_SUCCESS",
+      "notebook_task": {
+        "notebook_path": "/Workspace/consolidated_pipeline/3_fact_data_processing/2_incremental_load_fact",
+        "base_parameters": {
+          "catalog": "fmcg",
+          "data_source": "orders"
+        },
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 0,
+      "email_notifications": {},
+      "webhook_notifications": {}
+    }
+  ],
+  "queue": {
+    "enabled": true
+  },
+  "performance_target": "PERFORMANCE_OPTIMIZED"
+}
